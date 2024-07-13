@@ -13,3 +13,11 @@
     --Suggestions Rows
         --Multiple
     --Search Integration with chatGPT to show movies based on the given text.
+
+
+
+# Building :
+    -Login Form 
+        SingUp form using the same form by handling states
+    --Form Validation
+        using Regular Expressions 

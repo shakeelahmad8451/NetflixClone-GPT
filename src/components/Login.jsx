@@ -1,8 +1,10 @@
-import React, { useState,useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import Header from './Header'
 import { Validate } from '../utils/Validate';
 import { FaEye } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa";
+import { auth } from "../utils/firebase.js";
+import { createUserWithEmailAndPassword,signInWithEmailAndPassword } from 'firebase/auth';
 
 
 const Login = () => {
@@ -10,73 +12,116 @@ const Login = () => {
     const [isSignInForm, setIsSingInForm] = useState(true);
     const [isPasswordVisible, setIsPasswordVisible] = useState(false)
 
-    const [errorMessage,setErrorMessage]=useState(null) // to set the error if any returned by Validate Funtion 
-    
+    const [errorMessage, setErrorMessage] = useState(null) // to set the error if any returned by Validate Funtion 
+
 
     // we use useRef to get the reference of the object i.e to get the reference of the input fields in simple words we can get the current value present in the input field
-    const email=useRef(null)
-    const password=useRef(null) // input fields are set to null 
+    const email = useRef(null)
+    const password = useRef(null) // input fields are set to null 
 
 
     const toggleSingInForm = () => {
         setIsSingInForm(!isSignInForm);
 
+        // To set fields to null whenever user toggle between forms
+        email.current.value=null;
+        password.current.value=null;
+
     }
 
     const togglePasswordVisibility = () => {
-        setIsPasswordVisible(!isPasswordVisible)
+        setIsPasswordVisible(!isPasswordVisible);
     }
 
 
-    const handleValidation=()=>{
+    const handleValidation = () => {
 
         //console.log(email.current.value)// gives access to the current value in the field
         //console.log(password.current.value)//
-        
+
         // As we have access to current values we can now validate them
-        const message=Validate(email.current.value,password.current.value)
-        setErrorMessage(message)
+        const message = Validate(email.current.value, password.current.value)
+        setErrorMessage(message);
+        if (message) return; // to make sure the function gets aborted if the username or password are not validated from Validate Function defined in utils/validate.js
+
+        // Here goes our signIn or signUp login if the password and email are ok then move forrward
+        if (!isSignInForm) {
+            // this means user is currently on signup form so we have to write the signUp logic here
+            createUserWithEmailAndPassword(auth, email.current.value, password.current.value)
+                .then((userCredential) => {
+                    // Signed up 
+                    const user = userCredential.user;
+                    console.log(user);
+                    console.log("SignUp Successfully!!!");
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    console.log(error + " " + errorMessage);
+                    setErrorMessage(errorMessage);
+                });
+
+        }
+
+        else {
+            // the user is on signIn form so write signIn login here
+            signInWithEmailAndPassword(auth, email.current.value, password.current.value)
+                .then((userCredential) => {
+                    // Signed in 
+                    const user = userCredential.user;
+                    console.log(user);
+                    console.log("Singed In Successfully!!!");
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    console.log(error + " " + errorMessage);
+                    setErrorMessage(errorMessage);
+
+                });
+        }
 
     }
 
     return (
         <>
-            <div className='text-white'>
+            <div className='text-white  '>
                 <Header />
 
-                <img className='h-[100vh] w-full' src="https://assets.nflxext.com/ffe/siteui/vlv3/51c1d7f7-3179-4a55-93d9-704722898999/9695e4db-f672-4c1f-ae2d-555a579e9ced/PK-en-20240610-popsignuptwoweeks-perspective_alpha_website_large.jpg" alt="background image" />
+                <img className='h-[100vh] absolute w-full' src="https://assets.nflxext.com/ffe/siteui/vlv3/51c1d7f7-3179-4a55-93d9-704722898999/9695e4db-f672-4c1f-ae2d-555a579e9ced/PK-en-20240610-popsignuptwoweeks-perspective_alpha_website_large.jpg" alt="background image" />
 
-                <form onSubmit={(e)=>e.preventDefault()} className='w-[450px] z-50 absolute rounded-lg top-40 left-[550px] bg-black bg-opacity-70 px-6 py-11' action="">
-                    <h1 className='font-bold text-3xl mb-6'>{isSignInForm ? "Sign In" : "SingUp"}</h1>
+                <div className="h-[100vh] flex flex-col items-center justify-center">
+                <form onSubmit={(e) => e.preventDefault()} className='w-[450px] z-50  rounded-lg  bg-black bg-opacity-70 px-6 py-11' action="">
+                    <h1 className='font-bold text-3xl mb-6'>{isSignInForm ? "Sign In" : "Sign Up"}</h1>
 
                     {!isSignInForm
-                        ?(<div className="w-full bg-gray-800 my-3 py-2 rounded-sm px-2">
-                            <input  className='bg-transparent border-none h-full w-full p-2' type="text" placeholder='User Name' />
+                        ? (<div className="w-full bg-gray-800 my-3 py-1 rounded-sm px-1">
+                            <input className='bg-transparent border-none h-full w-full p-2' type="text" placeholder='User Name' />
                         </div>)
-                        :null
+                        : null
                     }
 
-                    <div className="w-full bg-gray-800 my-3 py-2 rounded-sm px-2">
+                    <div className="w-full bg-gray-800 my-3 py-1 rounded-sm px-1">
                         <input ref={email} className='bg-transparent border-none h-full w-full p-2' type="email" placeholder='Email' />
                     </div>
 
-                    <div className="flex justify-around items-center w-full bg-gray-800 my-3 py-2 rounded-sm px-2">
-                            <input
-                                ref={password}
-                                className='bg-transparent border-none h-full w-[90%] p-2'
-                                type={isPasswordVisible ? 'text' : 'password'}
-                                placeholder='Password'
-                            />
-                            {isPasswordVisible ? (
-                                <FaEye onClick={togglePasswordVisibility} className='cursor-pointer' />
-                                
-                            ) : (
-                                <FaEyeSlash onClick={togglePasswordVisibility} className='cursor-pointer' />
-                            )}
-                        </div>
+                    <div className="flex justify-around items-center w-full bg-gray-800 my-3 py-1 rounded-sm px-1">
+                        <input
+                            ref={password}
+                            className='bg-transparent border-none h-full w-[90%] p-2'
+                            type={isPasswordVisible ? 'text' : 'password'}
+                            placeholder='Password'
+                        />
+                        {isPasswordVisible ? (
+                            <FaEye onClick={togglePasswordVisibility} className='cursor-pointer' />
+
+                        ) : (
+                            <FaEyeSlash onClick={togglePasswordVisibility} className='cursor-pointer' />
+                        )}
+                    </div>
 
                     {!isSignInForm ? (
-                        <div className="flex justify-around items-center w-full bg-gray-800 my-3 py-2 rounded-sm px-2">
+                        <div className="flex justify-around items-center w-full bg-gray-800 my-3 py-1 rounded-sm px-1">
                             <input
                                 className='bg-transparent border-none h-full w-[90%] p-2'
                                 type={isPasswordVisible ? 'text' : 'password'}
@@ -86,17 +131,18 @@ const Login = () => {
                                 <FaEye onClick={togglePasswordVisibility} className='cursor-pointer' />
                             ) : (
                                 <FaEyeSlash onClick={togglePasswordVisibility} className='cursor-pointer' />
-                                
+
                             )}
                         </div>
                     ) : null}
 
                     <p className='text-red-600 font-bold p-2'>{errorMessage}</p>
 
-                    <button onClick={handleValidation} className='w-full my-3 py-2 rounded-sm px-2 font-bold bg-red-700' >{isSignInForm ? "Sign In" : "Sing Up"}</button>
-                    <p>{isSignInForm ? "Don't have an Account?" : "Already have an Account ?"} <span className='text-red-700 font-bold cursor-pointer ' onClick={toggleSingInForm}>{isSignInForm ? "SingUp" : "SingIn"}</span></p>
+                    <button onClick={handleValidation} className='w-full my-3 py-2 rounded-sm px-2 font-bold bg-red-700' >{isSignInForm ? "Sign In" : "Sign Up"}</button>
+                    <p>{isSignInForm ? "Don't have an Account?" : "Already have an Account ?"} <span className='text-red-700 font-bold cursor-pointer ' onClick={toggleSingInForm}>{isSignInForm ? "SignUp" : "SignIn"}</span></p>
                     <small className='text-gray-300 '>This page is protected by google reCAPTCHA to avoid any problem.Learn what is reCAPTCHA</small>
                 </form>
+                </div>
             </div>
 
         </>
