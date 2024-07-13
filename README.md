@@ -21,3 +21,6 @@
         SingUp form using the same form by handling states
     --Form Validation
         using Regular Expressions 
+    --Form Authentication
+        using Firebase database SingIn/SingUp feature using firebase API
+        
