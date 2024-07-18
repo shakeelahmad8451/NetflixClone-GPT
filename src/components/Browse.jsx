@@ -2,7 +2,9 @@ import React from 'react'
 
 const Browse = () => {
   return (
-    <div>Browse</div>
+    <>
+      <div className='pt-[5rem]'>Browse</div>
+    </>
   )
 }
 
